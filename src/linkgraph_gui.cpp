@@ -78,8 +78,10 @@ void LinkGraphOverlay::RebuildCache()
 			supply += lg.Monthly(from_node.Supply());
 			for (ConstEdgeIterator i = from_node.Begin(); i != from_node.End(); ++i) {
 				StationID to = lg[i->first].Station();
+				assert(from != to);
 				if (!Station::IsValidID(to)) continue;
 				const Station *stb = Station::Get(to);
+				assert(sta != stb);
 				if (stb->owner != OWNER_NONE && !HasBit(this->company_mask, stb->owner)) continue;
 				if (stb->rect.IsEmpty()) continue;
 
