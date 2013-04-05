@@ -49,8 +49,11 @@ void LinkGraph::Compress()
 	for (NodeID node1 = 0; node1 < this->Size(); ++node1) {
 		this->nodes[node1].supply /= 2;
 		for (NodeID node2 = 0; node2 < this->Size(); ++node2) {
-			this->edges[node1][node2].capacity /= 2;
-			this->edges[node1][node2].usage /= 2;
+			BaseEdge &edge = this->edges[node1][node2];
+			if (edge.capacity > 0) {
+				edge.capacity = max(1U, edge.capacity / 2);
+				edge.usage = max(1U, edge.usage / 2);
+			}
 		}
 	}
 }
@@ -175,7 +178,9 @@ void LinkGraph::Node::AddEdge(NodeID to, uint capacity, uint usage)
 
 void LinkGraph::Node::UpdateEdge(NodeID to, uint capacity, uint usage)
 {
-	if (this->edges[to].capacity == 0) {
+	assert(capacity > 0);
+	assert(usage <= capacity || usage == UINT_MAX);
+	if (this->edges[to].last_update == INVALID_DATE) {
 		this->AddEdge(to, capacity, usage);
 	} else {
 		(*this)[to].Update(capacity, usage);

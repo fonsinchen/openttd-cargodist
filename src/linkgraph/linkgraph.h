@@ -341,7 +341,7 @@ public:
 		 * Get an iterator pointing to the start of the edges array.
 		 * @return Constant edge iterator.
 		 */
-		ConstEdgeIterator Begin() const { return ConstEdgeIterator(this->edges, index); }
+		ConstEdgeIterator Begin() const { return ConstEdgeIterator(this->edges, this->index); }
 
 		/**
 		 * Get an iterator pointing beyond the end of the edges array.
