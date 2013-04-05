@@ -199,7 +199,10 @@ public:
 		 * @param base Array of edges to be iterated.
 		 * @param current ID of current node (to locate the first edge).
 		 */
-		BaseEdgeIterator (Tedge *base, NodeID current) : base(base), current(current) {}
+		BaseEdgeIterator (Tedge *base, NodeID current) :
+			base(base),
+			current(current == INVALID_NODE ? current : base[current].next_edge)
+		{}
 
 		/**
 		 * Prefix-increment.
