@@ -79,7 +79,9 @@ void LinkGraphOverlay::RebuildCache()
 			for (ConstEdgeIterator i = from_node.Begin(); i != from_node.End(); ++i) {
 				StationID to = lg[i->first].Station();
 				assert(from != to);
-				if (!Station::IsValidID(to)) continue;
+				if (!Station::IsValidID(to) || seen_links.find(to) != seen_links.end()) {
+					continue;
+				}
 				const Station *stb = Station::Get(to);
 				assert(sta != stb);
 				if (stb->owner != OWNER_NONE && !HasBit(this->company_mask, stb->owner)) continue;
@@ -88,7 +90,6 @@ void LinkGraphOverlay::RebuildCache()
 				if (!this->IsLinkVisible(pta, this->GetStationMiddle(stb), &dpi)) continue;
 
 				this->AddLinks(sta, stb);
-				this->AddLinks(stb, sta);
 				seen_links[to]; // make sure it is created and marked as seen
 			}
 		}
@@ -141,14 +142,15 @@ void LinkGraphOverlay::AddLinks(const Station *from, const Station *to)
 	FOR_EACH_SET_CARGO_ID(c, this->cargo_mask) {
 		if (!CargoSpec::Get(c)->IsValid()) continue;
 		const GoodsEntry &ge = from->goods[c];
-		uint sum_flows = ge.GetSumFlowVia(to->index);
-		if (!LinkGraph::IsValidID(from->goods[c].link_graph)) continue;
-		const LinkGraph &lg = *LinkGraph::Get(from->goods[c].link_graph);
-		ConstNode source = lg[from->goods[c].node];
-		for (ConstEdgeIterator i = source.Begin(); i != source.End(); ++i) {
-			ConstEdge edge = i->second;
+		if (!LinkGraph::IsValidID(ge.link_graph) ||
+				ge.link_graph != to->goods[c].link_graph) {
+			continue;
+		}
+		const LinkGraph &lg = *LinkGraph::Get(ge.link_graph);
+		ConstEdge edge = lg[ge.node][to->goods[c].node];
+		if (edge.Capacity() > 0) {
 			this->AddStats(lg.Monthly(edge.Capacity()), lg.Monthly(edge.Usage()),
-					sum_flows, this->cached_links[from->index][to->index]);
+					ge.GetSumFlowVia(to->index), this->cached_links[from->index][to->index]);
 		}
 	}
 }
