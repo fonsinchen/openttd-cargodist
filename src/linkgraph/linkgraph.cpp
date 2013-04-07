@@ -52,7 +52,7 @@ void LinkGraph::Compress()
 			BaseEdge &edge = this->edges[node1][node2];
 			if (edge.capacity > 0) {
 				edge.capacity = max(1U, edge.capacity / 2);
-				edge.usage = max(1U, edge.usage / 2);
+				edge.usage /= 2;
 			}
 		}
 	}
