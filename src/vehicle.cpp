@@ -2085,8 +2085,14 @@ void Vehicle::RefreshNextHopsStats()
 	if (this->orders.list == NULL) return;
 
 	uint hops = 0;
-	const Order *first = this->orders.list->GetNextStoppingOrder(this,
-			this->GetOrder(this->cur_implicit_order_index), hops);
+	const Order *first = this->GetOrder(this->cur_implicit_order_index);
+	do {
+		/* Make sure the first order is a station order. */
+		first = this->orders.list->GetNextStoppingOrder(this, first, hops++);
+		if (first == NULL) return;
+	} while (!first->IsType(OT_GOTO_STATION));
+	hops = 0;
+
 	const Order *cur = first;
 	const Order *next = first;
 	while (next != NULL && cur->CanLeaveWithCargo(true)) {
@@ -2094,7 +2100,12 @@ void Vehicle::RefreshNextHopsStats()
 				this->orders.list->GetNext(next), ++hops);
 		if (next == NULL) break;
 
-		if (next->IsType(OT_GOTO_DEPOT)) {
+		/* If the refit cargo is CT_AUTO_REFIT, we're optimistic and assume the
+		 * cargo will stay the same. The point of this method is to avoid
+		 * deadlocks due to vehicles waiting for cargo that isn't being routed,
+		 * yet. That situation will not occur if the vehicle is actually
+		 * carrying a different cargo in the end. */
+		if (next->IsAutoRefit() && next->GetRefitCargo() != CT_AUTO_REFIT) {
 			/* Handle refit by dropping some vehicles. */
 			CargoID new_cid = next->GetRefitCargo();
 			for (Vehicle *v = this; v != NULL; v = v->Next()) {
@@ -2133,7 +2144,9 @@ void Vehicle::RefreshNextHopsStats()
 					break; // aircraft have only one vehicle
 				}
 			}
-		} else {
+		}
+
+		if (next->IsType(OT_GOTO_STATION)) {
 			StationID next_station = next->GetDestination();
 			Station *st = Station::GetIfValid(cur->GetDestination());
 			if (st != NULL && next_station != INVALID_STATION && next_station != st->index) {
