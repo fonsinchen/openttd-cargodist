@@ -4080,6 +4080,10 @@ StationID FlowStat::GetVia(StationID excluded, StationID excluded2) const
  */
 void FlowStat::ChangeShare(StationID st, int flow)
 {
+	/* We assert only before changing as afterwards the shares can actually
+	 * be empty. In that case the whole flow stat must be deleted then. */
+	assert(!this->shares.empty());
+
 	int32 added_shares = 0;
 	uint32 last_share = 0;
 	SharesMap new_shares;
@@ -4117,6 +4121,7 @@ void FlowStatMap::AddFlow(StationID origin, StationID via, uint flow)
 		this->insert(std::make_pair(origin, FlowStat(via, flow)));
 	} else {
 		origin_it->second.ChangeShare(via, flow);
+		assert(!origin_it->second.GetShares()->empty());
 	}
 }
 
@@ -4138,6 +4143,7 @@ void FlowStatMap::PassOnFlow(StationID origin, StationID via, uint flow)
 	} else {
 		prev_it->second.ChangeShare(via, flow);
 		prev_it->second.ChangeShare(INVALID_STATION, flow);
+		assert(!prev_it->second.GetShares()->empty());
 	}
 }
 
@@ -4152,6 +4158,27 @@ void FlowStatMap::FinalizeLocalConsumption(StationID self)
 		uint local = fs.GetShare(INVALID_STATION);
 		fs.ChangeShare(self, -local);
 		fs.ChangeShare(INVALID_STATION, -local);
+
+		/* If the local share is used up there must be a share for some
+		 * remote station. */
+		assert(!fs.GetShares()->empty());
+	}
+}
+
+/**
+ * Delete all flows at a station for specific cargo and destination.
+ * @param via Remote station of flows to be deleted.
+ */
+void FlowStatMap::DeleteFlows(StationID via)
+{
+	for (FlowStatMap::iterator f_it = this->begin(); f_it != this->end();) {
+		FlowStat &s_flows = f_it->second;
+		s_flows.ChangeShare(via, INT_MIN);
+		if (s_flows.GetShares()->empty()) {
+			this->erase(f_it++);
+		} else {
+			++f_it;
+		}
 	}
 }
 

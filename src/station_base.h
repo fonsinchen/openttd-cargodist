@@ -88,6 +88,7 @@ class FlowStatMap : public std::map<StationID, FlowStat> {
 public:
 	void AddFlow(StationID origin, StationID via, uint amount);
 	void PassOnFlow(StationID origin, StationID via, uint amount);
+	void DeleteFlows(StationID via);
 	void FinalizeLocalConsumption(StationID self);
 };
 
