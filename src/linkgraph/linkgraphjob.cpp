@@ -49,8 +49,13 @@ LinkGraphJob::~LinkGraphJob()
 			for (NodeID from_id = 0; from_id < size; ++from_id) {
 				if ((*this)[from_id][node_id].Capacity() > 0) {
 					FlowStatMap &flows = this->nodes[from_id].flows;
-					for (FlowStatMap::iterator it(flows.begin()); it != flows.end(); ++it) {
+					for (FlowStatMap::iterator it(flows.begin()); it != flows.end();) {
 						it->second.ChangeShare(station, INT_MIN);
+						if (it->second.GetShares()->empty()) {
+							flows.erase(it++);
+						} else {
+							++it;
+						}
 					}
 				}
 			}
