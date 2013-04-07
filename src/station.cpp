@@ -100,7 +100,7 @@ Station::~Station()
 		}
 		Station *st;
 		FOR_ALL_STATIONS(st) {
-			DeleteStaleFlows(st->index, c, this->index);
+			Station::Get(st->index)->goods[c].flows.DeleteFlows(this->index);
 			GoodsEntry *ge = &st->goods[c];
 			ge->cargo.Reroute(UINT_MAX, &ge->cargo, this->index, st->index, ge);
 		}

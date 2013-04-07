@@ -3367,26 +3367,6 @@ static void UpdateStationRating(Station *st)
 }
 
 /**
- * Delete all flows at a station for specific cargo and destination.
- * @param at Station to delete flows from.
- * @param c_id Cargo for which flows shall be deleted.
- * @param to Remote station of flows to be deleted.
- */
-void DeleteStaleFlows(StationID at, CargoID c_id, StationID to)
-{
-	FlowStatMap &flows = Station::Get(at)->goods[c_id].flows;
-	for (FlowStatMap::iterator f_it = flows.begin(); f_it != flows.end();) {
-		FlowStat &s_flows = f_it->second;
-		s_flows.ChangeShare(to, INT_MIN);
-		if (s_flows.GetShares()->empty()) {
-			flows.erase(f_it++);
-		} else {
-			++f_it;
-		}
-	}
-}
-
-/**
  * Check all next hops of cargo packets in this station for existance of a
  * a valid link they may use to travel on. Reroute any cargo not having a valid
  * link and remove timed out links found like this from the linkgraph. We're
